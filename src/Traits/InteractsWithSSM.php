@@ -224,7 +224,7 @@ trait InteractsWithSSM
 
         while ($attempt < $maxAttempts) {
             try {
-                $awsResult = $getClient()->getParametersByPath($arguments);
+                $awsResult = $this->getClient()->getParametersByPath($arguments);
                 break; // If the request is successful, break out of the loop
             } catch (\Exception $e) {
                 $attempt++;
