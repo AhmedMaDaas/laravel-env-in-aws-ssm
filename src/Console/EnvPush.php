@@ -40,7 +40,7 @@ class EnvPush extends Command
      */
     public function handle(): int
     {
-        $this->stage = $this->argument('stage');
+        $this->stage = str_replace('stage=', '', $this->argument('stage'));
 
         if (!file_exists('.env.' . $this->stage)) {
             throw new InvalidArgumentException("'.env.$this->stage' doesn't exists.");

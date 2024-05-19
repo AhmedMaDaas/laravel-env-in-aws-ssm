@@ -41,7 +41,7 @@ class EnvList extends Command
      */
     public function handle(): int
     {
-        $this->stage = $this->argument('stage');
+        $this->stage = str_replace('stage=', '', $this->argument('stage'));
         $keyValues = $this->unifySplitValues($this->getEnvironmentVarsFromRemote()->sortKeys());
 
         if ($this->option('key')) {

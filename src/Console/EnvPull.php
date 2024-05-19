@@ -40,7 +40,7 @@ class EnvPull extends Command
      */
     public function handle(): int
     {
-        $this->stage = $this->argument('stage');
+        $this->stage = str_replace('stage=', '', $this->argument('stage'));
 
         $resolvedEnv = '';
 
