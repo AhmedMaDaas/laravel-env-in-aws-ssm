@@ -218,10 +218,23 @@ trait InteractsWithSSM
             $arguments['NextToken'] = $nextToken;
         }
 
-        $awsResult = retry(
-            [3000, 6000, 9000],
-            fn () =>$this->getClient()->getParametersByPath($arguments)
-        );
+        $retryIntervals = [3000, 6000, 9000];
+        $attempt = 0;
+        $maxAttempts = count($retryIntervals) + 1;
+
+        while ($attempt < $maxAttempts) {
+            try {
+                $awsResult = $getClient()->getParametersByPath($arguments);
+                break; // If the request is successful, break out of the loop
+            } catch (\Exception $e) {
+                $attempt++;
+                if ($attempt >= $maxAttempts) {
+                    throw $e; // Re-throw the exception if all attempts fail
+                }
+                // Wait for the specified interval before the next attempt
+                usleep($retryIntervals[$attempt - 1] * 1000); // Convert milliseconds to microseconds
+            }
+        }
 
         $parameters = collect($awsResult['Parameters'])
             ->mapWithKeys(fn (array $parameter) => [$this->unQualifyKey($parameter['Name']) => $parameter['Value']]);

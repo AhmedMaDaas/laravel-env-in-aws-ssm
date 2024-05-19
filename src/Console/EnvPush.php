@@ -84,16 +84,30 @@ class EnvPush extends Command
             $this->getClient()->deleteParameters(['Names' => $qualifiedKeys]);
         }
 
-        $under->each(function (string $val, string $key) use ($bar) {
-            retry(
-                [3000, 6000, 9000],
-                fn () => $this->getClient()->putParameter([
-                    'Name' => $this->qualifyKey($key),
-                    'Value' => $val,
-                    'Overwrite' => true,
-                    'Type' => 'String'
-                ])
-            );
+        $retryIntervals = [3000, 6000, 9000];
+
+        $under->each(function (string $val, string $key) use ($bar, $retryIntervals) {
+            $attempt = 0;
+            $maxAttempts = count($retryIntervals) + 1;
+
+            while ($attempt < $maxAttempts) {
+                try {
+                    $this->getClient()->putParameter([
+                        'Name' => $this->qualifyKey($key),
+                        'Value' => $val,
+                        'Overwrite' => true,
+                        'Type' => 'String'
+                    ]);
+                    break; // If the request is successful, break out of the loop
+                } catch (\Exception $e) {
+                    $attempt++;
+                    if ($attempt >= $maxAttempts) {
+                        throw $e; // Re-throw the exception if all attempts fail
+                    }
+                    // Wait for the specified interval before the next attempt
+                    usleep($retryIntervals[$attempt - 1] * 1000); // Convert milliseconds to microseconds
+                }
+            }
             $bar->advance();
         });
 
